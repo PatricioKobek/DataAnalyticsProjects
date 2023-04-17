@@ -9,7 +9,7 @@ Second, the original author does not clean the data set (location, continent, in
 5x as many cases worldwide). After downloading the data (https://ourworldindata.org/covid-deaths as of April 11, 2023), ensure to check and clean these specific
 columns.
 */
-
+ 
 
 
 -- 1. 
