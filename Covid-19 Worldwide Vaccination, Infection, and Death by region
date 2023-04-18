@@ -1,71 +1,96 @@
 /*
-SQL Queries for Covid-19 Deaths Worldwide data (Data cleaning, validation, Tableau dashboard project)
-This begins as a guided project but there are several key changes in the code for a more unique analysis.  
+Covid-19 Analysis of Worldwide rates of infection, fatal cases, vaccination by region (Data cleaning, validation, Tableau dashboard project)
+This begins as a guided project but there are several key changes for a unique analysis.  
 
-Important notes - Author of original guided project does not format their data in a way that works
-with calculations. Most queries require [AS FLOAT] or similar for calculations.
+Important notes - Author of original guided project does not format the initial data. If following 
+that same guide, queries require [AS FLOAT] or similar for all calculations.
 
-Second, the original author does not clean the data set (location, continent, income) which will result in significant errors (literally 
-5x as many cases worldwide). After downloading the data (https://ourworldindata.org/covid-deaths as of April 11, 2023), ensure to check and clean these specific
-columns.
+Second, the downloaded data set (https://ourworldindata.org/covid-deaths as of April 11, 2023) requires cleaning (coumns location, continent, income). 
+Using the data in its default format will result in significant errors, such as calculating the worldwide infection rate at more than five times
+the actual number.
 */
+
  
-
-
 -- 1. 
 /*
-Regarding my second point above, Total Cases calculates to 3,232,470,197, which is incorrect and five times a much as the actual worldwide infection rate.
-See the [NOT IN] list in the query below for an example of column categories that need to be excluded 
-from the calculation or cleaned in the source data.
+Regarding my second point above, using the raw, uncleaned data shows "Total Cases" as 3,232,470,197, which is incorrect and five times a much as the actual 
+worldwide infection rate. See the [NOT IN] list in the query below for an example of column categories that need to be excluded from the calculation or 
+cleaned in the source data.
 */
 
 
-```sql Select SUM(cast(new_cases as bigint)) as total_cases, SUM(cast(new_deaths as float)) 
-as total_deaths, SUM(cast(new_deaths as float))/SUM(cast(new_cases as float))*100 as DeathPercentage
-From PortfolioProject..CovidDeaths
-where continent is not null
-AND location NOT IN ('Asia', 'North America', 'South America', 'Europe', 'Oceania', 'Africa', 'European Union', 'High Income', 
-'Low Income', 'Lower middle income', 'Upper middle income', 'World' )
-order by 1,2; ```
+Select SUM(cast(new_cases as bigint)) as total_cases, 
+ SUM(cast(new_deaths as float)) as total_deaths, 
+ SUM(cast(new_deaths as float))/SUM(cast(new_cases as float))*100 as DeathPercentage
+ From PortfolioProject..CovidDeaths
+ where continent is not null
+ AND location NOT IN ('Asia', 'North America', 'South America', 'Europe', 'Oceania', 'Africa', 'European Union', 'High Income', 
+'Low Income', 'Lower middle income', 'Upper middle income', 'World')
+ order by 1,2; 
 
 
 --If data set is cleaned, the following query is sufficient:
-Select SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(cast(new_deaths as int))/SUM(New_Cases)*100 as DeathPercentage
-From PortfolioProject..CovidDeaths
-where continent is not null 
-order by 1,2
+
+Select SUM(new_cases) as total_cases, 
+ SUM(cast(new_deaths as int)) as total_deaths, 
+ SUM(cast(new_deaths as int))/SUM(New_Cases)*100 as DeathPercentage
+ From PortfolioProject..CovidDeaths
+ where continent is not null 
+ order by 1,2
 
 
 -- 2. 
+/*
+If the data is not cleaned, this helps locate colums in location that are incorrectly labelled by their continent. 
+This query helps ensure our data is correct, FYI.
+*/
 
--- This query helps ensure our data is correct, just FYI
+Select location, 
+ SUM(cast(new_deaths as int)) as TotalDeathCount
+ From PortfolioProject..CovidDeaths
+ Where continent is null 
+ and location not in ('World', 'European Union', 'International')
+ Group by location
+ order by TotalDeathCount desc
 
-Select location, SUM(cast(new_deaths as int)) as TotalDeathCount
-From PortfolioProject..CovidDeaths
---Where location like '%states%'
-Where continent is null 
-and location not in ('World', 'European Union', 'International')
-Group by location
-order by TotalDeathCount desc
+/*
+Total Death count to present day by location. 
+Note this includes entries for continents, which already sum the totals of the countries that form part of the whole, 
+as well as certain economic measurments by income. 
+*/
+
+Select location, 
+ SUM(cast(new_deaths as int)) as TotalDeathCount
+ From PortfolioProject..CovidDeaths
+ Where continent is not null 
+ and location not in ('World', 'European Union', 'International')
+ Group by location
+ order by TotalDeathCount desc
 
 
 -- 3.
 --Check percentage of population infected
 
-Select Location, Population, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
-From PortfolioProject..CovidDeaths
-Group by Location, Population
-order by PercentPopulationInfected desc
+Select Location, 
+ Population, 
+ MAX(total_cases) as HighestInfectionCount,  
+ Max((total_cases/population))*100 as PercentPopulationInfected
+ From PortfolioProject..CovidDeaths
+ Group by Location, Population
+ order by PercentPopulationInfected desc
 
 
 -- 4.
 
-Select Location, Population,date, MAX(total_cases) as HighestInfectionCount,  Max((total_cases/population))*100 as PercentPopulationInfected
-From PortfolioProject..CovidDeaths
-Group by Location, Population, date
-order by PercentPopulationInfected desc;
+Select Location, 
+ Population,
+ date, 
+ MAX(total_cases) as HighestInfectionCount,  
+ Max((total_cases/population))*100 as PercentPopulationInfected
+ From PortfolioProject..CovidDeaths
+ Group by Location, Population, date
+ order by PercentPopulationInfected desc;
 
-```
 
 
 
