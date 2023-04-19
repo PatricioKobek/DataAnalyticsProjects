@@ -1,1 +1,114 @@
-Placeholder for Table of Contends link
+--Canadian Liquified Natural Gas Imports and Exports 2009 to Present (April 2023)
+
+/*
+Notes
+1 - There are three Excel Worksheets (English, see Canada.ca - Open Government - Liquefied Natural Gas (LNG) – Imports and Exports
+for French datasets). The three worksheets are DETAIL (all imports and exports), Monthly and Annual (the last two
+provide sums of imports and exports with less detail). Monthly and Annual are used to check our calculations.
+
+2 - MC3 (Mm3) is the measuremeant used in Canada and Europe, while MCF is for American measurement.
+
+3 - An early problem solved - Monthy and Annual reports show double the total volume compared to "DETAIL" file. 
+This is because they have feature "total" rows after each month or year, doubling the results. 
+
+4 - A quick note to avoid confusion. Total Volume Import and Export has roughly a 3:1 ratio since 2009. Natural gas (not liquified)
+imports and exports have a ratio of rouhgly 1:3. This is coincidence, but important to know, because at first I thought
+that the dataset was mislabelled until I inquired further.
+*/
+
+/*
+1. Overall Import vs Exports
+In Tableau show overall volume exported and imported from 2009 to present
+*/
+
+select *   
+from PortfolioProject..[CanadaNaturalGas]
+
+
+--Imports - Year, Country of Origin, TotalVolumeImport
+SELECT [Year], [Country of Origin], SUM(CAST([Volume (Gas Equivalent) (10^3 m3)] AS DECIMAL)) as TotalVolumeImport
+FROM PortfolioProject..CanadaNaturalGas
+WHERE [Flow] = 'Imports'
+GROUP BY [Year], [Country of Origin]
+ORDER BY [Year], TotalVolumeImport DESC;
+
+--Exports
+SELECT [Country of Origin], SUM(CAST([Volume (Gas Equivalent) (10^3 m3)] AS DECIMAL)) as TotalVolumeExport
+FROM PortfolioProject..CanadaNaturalGas
+WHERE [Flow] = 'Exports'
+GROUP BY [Country of Origin]
+ORDER BY TotalVolumeExport DESC;
+
+/*
+2. Export per year to location 
+Tableau - Location, TotalExport
+*/
+
+--Location, TotalExport (Bargraph or treemap)
+SELECT [Year], [Country of Origin], [Country of Destination], SUM(CAST([Volume (Gas Equivalent) (10^3 m3)] AS DECIMAL)) as YearlyVolumeExport
+FROM PortfolioProject..CanadaNaturalGas
+WHERE [Flow] = 'Exports'
+GROUP BY [Year], [Country of Origin], [Country of Destination]
+ORDER BY [Year], YearlyVolumeExport DESC;
+
+--Country of origin, TotalVolumeCubic,TotalVolumeMCF
+--No Flow? --
+-------------
+SELECT [Country of Origin], SUM(CAST([Volume (Gas Equivalent) (10^3 m3)] AS DECIMAL)) as TotalVolumeCubic,
+SUM(CAST([Volume (Gas Equivalent) (MCF)] AS DECIMAL)) as TotalVolumeMCF
+FROM PortfolioProject..[CanadaNaturalGas]
+GROUP BY [Country of Origin]
+ORDER BY TotalVolumeCubic desc;
+
+/*
+3. Yearly rolling imports by country of origin
+*/
+/*
+--First attempt, realized it was missing rolling yearly total per country
+SELECT [Year], [Country of Origin], SUM(CAST([Volume (Gas Equivalent) (10^3 m3)] AS DECIMAL)) as TotalVolumeExport
+FROM PortfolioProject..CanadaNaturalGas
+WHERE [Flow] = 'Imports'
+GROUP BY [Year], [Country of Origin]
+ORDER BY [Year], TotalVolumeExport DESC;
+*/
+
+--IMPORTS, CTE for rolling total. 
+
+WITH AllYearsAndCountries AS (
+    SELECT DISTINCT Years.[Year], [Country of Origin]
+    FROM PortfolioProject..CanadaNaturalGas
+    CROSS JOIN (SELECT DISTINCT [Year] FROM PortfolioProject..CanadaNaturalGas) Years
+),
+YearlyImportTotal AS (
+    SELECT [Year], [Country of Origin], SUM(CAST([Volume (Gas Equivalent) (10^3 m3)] AS DECIMAL)) as YearlyImportTotal
+    FROM PortfolioProject..CanadaNaturalGas
+    WHERE [Flow] = 'Imports'
+    GROUP BY [Year], [Country of Origin]
+)
+SELECT a.[Year], a.[Country of Origin], COALESCE(y.YearlyImportTotal, 0) as YearlyImportTotal,
+SUM(COALESCE(y.YearlyImportTotal, 0)) OVER (PARTITION BY a.[Country of Origin] ORDER BY a.[Year] ROWS BETWEEN UNBOUNDED PRECEDING 
+AND CURRENT ROW) as RollingTotal
+FROM AllYearsAndCountries a
+LEFT JOIN YearlyImportTotal y ON a.[Year] = y.[Year] AND a.[Country of Origin] = y.[Country of Origin]
+ORDER BY a.[Year] ASC;
+
+/*
+5. Mode of transport by import/export vs quantity, order by year
+*/
+
+select * from PortfolioProject..[CanadaNaturalGas]
+
+--Import
+Select distinct [Mode of Transport], COUNT([Mode of Transport]) AS FrecuencyOfTransportType
+FROM PortfolioProject..CanadaNaturalGas
+WHERE [Flow] = 'Imports'
+GROUP BY [Mode of Transport]
+ORDER BY FrecuencyOfTransportType DESC;
+
+--Exports
+Select distinct [Mode of Transport], COUNT([Mode of Transport]) AS FrecuencyOfTransportType
+FROM PortfolioProject..CanadaNaturalGas
+WHERE [Flow] = 'Exports'
+GROUP BY [Mode of Transport]
+ORDER BY FrecuencyOfTransportType DESC;
+
