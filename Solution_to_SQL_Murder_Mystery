@@ -1,0 +1,112 @@
+The [SQL Murder Mystery]( https://mystery.knightlab.com/) is a great activity to do after learning a bit of the basics. Following the steps below will help reveal the killer and solve the case!
+
+/*
+Notes: The interface of the website does not let you store SQL code as you work along. I recommend proceeding in a manner similar to is below, storing your code and query results within “/**/” notes, because you will need to reference material often. This is especially true when you go to JOIN tables, which makes solving the case far easier. 
+*/
+
+Solution:
+/*Security footage shows that there were 2 witnesses. 
+The first witness lives at the last house on "Northwestern Dr". 
+The second witness, named Annabel, lives somewhere on "Franklin Ave".*/
+
+/*SELECT * FROM person WHERE name LIKE "%Annabel%" AND address_street_name = "Franklin Ave";
+16371	Annabel Miller	490173	103	Franklin Ave	318771143 */
+
+/*SELECT MAX(address_number) FROM person WHERE address_street_name = "Northwestern Dr";
+Address is 4919*/
+
+/*SELECT * FROM person WHERE address_number = "4919";
+id = 14887	name = Morty Schapiro	license_id 118009	
+address_number = 4919	address_street_name = Northwestern Dr ssn = 111564949 */
+
+/*Interview has person_id which is equal to table.person id*/
+
+/*SELECT * FROM interview WHERE person_id = "14887" and "16371";
+Morty Schapiro states:
+I heard a gunshot and then saw a man run out. He had a "Get Fit Now Gym" bag. 
+The membership number on the bag started with "48Z". 
+Only gold members have those bags. 
+The man got into a car with a plate that included "H42W".
+
+Annabel Miller states:
+I saw the murder happen, and I recognized the killer from my gym when I was 
+working out last week on January the 9th.
+*/
+
+/*SELECT * FROM get_fit_now_member where membership_status = "gold" AND id LIKE "48Z%";
+Two results: 
+id		person_id  name			membership_start_date	membership_status
+48Z7A	28819	Joe Germuska	20160305	gold
+48Z55	67318	Jeremy Bowers	20160101	gold  */
+
+/*SELECT * FROM drivers_license WHERE plate_number like "%H42W%" AND gender = "male";
+Two results:
+id	age	height	eye_color	hair_color	gender	plate_number	car_make	car_model
+423327	30	70	brown	brown	male	0H42W2	Chevrolet	Spark LS
+664760	21	71	black	black	male	4H42WR	Nissan	Altima  */
+
+/*SELECT * FROM get_fit_now_check_in WHERE membership_id = "48Z7A" 
+AND check_in_date = "20180109" OR membership_id = "48Z55" 
+AND check_in_date = "20180109";
+Result is both men were at the gym at different times.
+membership_id	check_in_date	check_in_time	check_out_time
+48Z7A	20180109	1600	1730
+48Z55	20180109	1530	1700 
+
+Next: What time was Annabel Miller working out?
+*/
+              
+/*SELECT * FROM get_fit_now_member WHERE name = "Annabel Miller";
+id	person_id	name	membership_start_date	membership_status
+90081	16371	Annabel Miller	20160208	gold" */
+
+/*SELECT * FROM get_fit_now_check_in WHERE membership_id = "90081" 
+AND check_in_date = "20180109";
+membership_id	check_in_date	check_in_time	check_out_time
+90081	20180109	1600	1700
+Result - Both men are working out when she is present.
+*/
+
+/*SELECT * FROM facebook_event_checkin WHERE person_id = "67318";
+Not sure if useful at all, this is Jeremy Bowers, but Annabel Miller also checked
+into this event on the same day, but Joe Germuska did not.
+person_id	event_id	event_name	date
+67318	4719	The Funky Grooves Tour	20180115 */
+
+/*SELECT * FROM person WHERE name = "Jeremy Bowers";
+id	name	license_id	address_number	address_street_name	ssn
+67318	Jeremy Bowers	423327	530	Washington Pl, Apt 3A	871539279 */
+
+/*SELECT * FROM interview where person_id = "67318";
+person_id	transcript
+67318	I was hired by a woman with a lot of money. 
+I don't know her name but I know she's around 5'5" (65") or 5'7" (67"). 
+She has red hair and she drives a Tesla Model S. I know that she attended the 
+SQL Symphony Concert 3 times in December 2017. */
+
+/* SELECT * FROM drivers_license WHERE car_make = "Tesla" AND car_model = "Model S"
+AND gender = "female" and height = "65";
+id	age	height	eye_color	hair_color	gender	plate_number	car_make	car_model
+918773	48	65	black	red	female	917UU3	Tesla	Model S */
+
+/* SELECT * FROM facebook_event_checkin 
+WHERE event_name = "SQL Symphony Concert" AND date LIKE "201712%" order by person_id;
+Result - 
+person_id	event_id	event_name	date
+24556	1143	SQL Symphony Concert	20171207
+24556	1143	SQL Symphony Concert	20171221
+24556	1143	SQL Symphony Concert	20171224
+
+and 
+
+99716	1143	SQL Symphony Concert	20171206
+99716	1143	SQL Symphony Concert	20171212
+99716	1143	SQL Symphony Concert	20171229  */
+
+/*SELECT * FROM person WHERE id = "99716";
+id	name	license_id	address_number	address_street_name	ssn
+99716	Miranda Priestly	202298	1883	Golden Ave	987756388 */
+
+First Joe Germuska, then Miranda Priestly as the woman who hired him as a hitman. 
+
+Congrats! You’ve solved the case!
