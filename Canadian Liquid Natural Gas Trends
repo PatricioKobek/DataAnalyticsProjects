@@ -8,12 +8,14 @@ provide sums of imports and exports with less detail). Monthly and Annual are us
 
 2 - MC3 (Mm3) is the measuremeant used in Canada and Europe, while MCF is for American measurement.
 
-3 - An early problem solved - Monthy and Annual reports show double the total volume compared to "DETAIL" file. 
-This is because they have feature "total" rows after each month or year, doubling the results. 
+3 - A common mistake appears if using Monthy and Annual reports for totals, because 
+they show double the total volume compared to "DETAIL" file. 
+This is because they have feature "total" rows after each month or year, doubling the results, that need to be 
+removed from queries to avoid misrepresenting the values. 
 
 4 - A quick note to avoid confusion. Total Volume Import and Export has roughly a 3:1 ratio since 2009. Natural gas (not liquified)
-imports and exports have a ratio of rouhgly 1:3. This is coincidence, but important to know, because at first I thought
-that the dataset was mislabelled until I inquired further.
+imports and exports have a ratio of rouhgly 1:3. This is purely coincidence, but important to know, because it would
+be easy to assume that the dataset is mislabelled to a reader who only has knowledge of natural gas and not liquified Natural gas.
 */
 
 /*
